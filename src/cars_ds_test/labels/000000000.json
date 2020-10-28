@@ -1,0 +1,21 @@
+{
+    "filename": "000000000",
+    "img_width": 224,
+    "img_height": 224,
+    "marks": [
+        {
+            "center_x": 26.5,
+            "center_y": 27.5,
+            "width": 9,
+            "length": 22,
+            "rot_deg": 62.5
+        },
+        {
+            "center_x": 56.5,
+            "center_y": 57.5,
+            "width": 9,
+            "length": 22,
+            "rot_deg": 102.5
+        }
+    ]
+}

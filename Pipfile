@@ -11,6 +11,7 @@ pycodestyle = "*"
 pytest = "*"
 pydocstyle = "*"
 numpy = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.8"
