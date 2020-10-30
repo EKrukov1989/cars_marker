@@ -3,6 +3,7 @@
 This module consists all logic of top level
 """
 
+import time
 import tkinter as tk
 from PIL import Image
 from PIL import ImageTk
@@ -13,7 +14,8 @@ import pathlib
 from datasetmanager import DatasetManager
 from markmanager import MarkManager
 
-DS_PATH = pathlib.Path('src/cars_ds_test')
+TEST_DS_PATH = pathlib.Path('src/cars_ds_test')
+DS_PATH = pathlib.Path('D:/my_cars_ds')
 BTN_INDENT = 750
 BTN_Y_INDENT = 20
 BTN_Y_STEP = 40
@@ -24,7 +26,7 @@ def main():
     root = tk.Tk()
     root.wm_title('cars_marker')
     root.wm_iconbitmap('src/images/window.ico')
-    root.geometry('1024x800')
+    root.geometry('1200x800')
     root.resizable(width=False, height=False)
 
     ds_m = DatasetManager(DS_PATH)
@@ -58,6 +60,7 @@ def main():
     def save_label():
         marks = mark_m.serialize_marks()
         ds_m.save_marks_in_label(marks)
+        mark_m.reset_image(*ds_m.get_current())
     save_btn = tk.Button(root, text="save marks in label (S)", width=18)
     save_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + 2 * BTN_Y_STEP)
     save_btn.config(command=save_label)
@@ -70,7 +73,9 @@ def main():
     rem_lable_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + 3 * BTN_Y_STEP)
     rem_lable_btn.config(command=remove_label)
 
-    # TODO: add winsounds
+    legend_label = tk.Label(root, text=mark_m.get_legend())
+    legend_label.config(justify=tk.LEFT)
+    legend_label.place(x=BTN_INDENT, y=500)
 
     root.mainloop()
 

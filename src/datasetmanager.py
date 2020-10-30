@@ -26,7 +26,6 @@ class DatasetManager():
         self.__labels_dir = ds_folder_path / 'labels'
         names = os.listdir(self.__images_dir)
         self.__stems = list(map(lambda n: str(pathlib.Path(n).stem), names))
-        print(self.__stems)
 
     def move_forward(self):
         """."""
