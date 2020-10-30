@@ -117,8 +117,8 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
 
         self.__mover = Mover(root, self.__move_mark)
         self.__rotator = Rotator(root, self.__rotate_mark)
-        r.bind("<Control-Left>", lambda ev: self.__change_width(self.__W_C))
-        r.bind("<Control-Right>", lambda ev: self.__change_width(-self.__W_C))
+        r.bind("<Control-Left>", lambda ev: self.__change_width(-self.__W_C))
+        r.bind("<Control-Right>", lambda ev: self.__change_width(self.__W_C))
         r.bind("<Control-Up>", lambda ev: self.__change_length(self.__L_C))
         r.bind("<Control-Down>", lambda ev: self.__change_length(-self.__L_C))
 
@@ -224,8 +224,8 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
             chosen_mark = self.__marks[self.__chosen_mark_idx]
             chosen_mark.cx += shift[0]
             chosen_mark.cy -= shift[1]  # because of y inversion
-            chosen_mark.cx = np.clip(chosen_mark.cx, 0, self.__IMG_SZ[0])
-            chosen_mark.cy = np.clip(chosen_mark.cy, 0, self.__IMG_SZ[1])
+            chosen_mark.cx = int(np.clip(chosen_mark.cx, 0, self.__IMG_SZ[0]))
+            chosen_mark.cy = int(np.clip(chosen_mark.cy, 0, self.__IMG_SZ[1]))
             self.__redraw()
 
     def __rotate_mark(self, rot):
@@ -238,15 +238,16 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         if self.__chosen_mark_idx is not None:
             chosen_mark = self.__marks[self.__chosen_mark_idx]
             chosen_mark.w += width_change
-            chosen_mark.w = np.clip(chosen_mark.w, self._W_MIN, self._W_MAX)
+            chosen_mark.w = int(np.clip(chosen_mark.w,
+                                self._W_MIN, self._W_MAX))
             self.__redraw()
 
     def __change_length(self, length_change):
         if self.__chosen_mark_idx is not None:
             chosen_mark = self.__marks[self.__chosen_mark_idx]
             chosen_mark.length += length_change
-            chosen_mark.length = np.clip(chosen_mark.length,
-                                         self._L_MIN, self._L_MAX)
+            chosen_mark.length = int(np.clip(chosen_mark.length,
+                                     self._L_MIN, self._L_MAX))
             self.__redraw()
 
     def serialize_marks(self):

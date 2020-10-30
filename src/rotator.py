@@ -22,7 +22,7 @@ class Rotator():
         r.bind("<Key-w>", lambda e: self.__forw_press())
         r.bind("<Key-q>", lambda e: self.__back_press())
         r.bind("<KeyRelease-w>", lambda e: self.__forw_release())
-        r.bind("<KeyRelease-q>", lambda e: self.__forw_release())
+        r.bind("<KeyRelease-q>", lambda e: self.__back_release())
 
     def __forw_press(self):
         self.__forw_press_counter += 1

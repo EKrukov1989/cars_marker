@@ -4,7 +4,7 @@
 class Mover():
     """Class for handling arrow events.
 
-    This class binds events for Left, Right, up, Down buttons 
+    This class binds events for Left, Right, up, Down buttons
     and call callback accroding with complex intrinsic logic
     """
 
