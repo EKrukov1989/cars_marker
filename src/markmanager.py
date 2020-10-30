@@ -141,7 +141,7 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
             return
         img = self.__img.resize(self.__RESIZED_SIZE)
         if self.__initial_marks:
-            img = self.__draw_marks(img, self.__initial_marks, 'grey')
+            img = self.__draw_marks(img, self.__initial_marks, 'grey', width=10)
         if self.__marks:
             unchosen_marks = copy.deepcopy(self.__marks)
             del unchosen_marks[self.__chosen_mark_idx]
@@ -157,17 +157,17 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         self.__fname_label['text'] = t
         self.__root.update_idletasks()
 
-    def __draw_marks(self, img, marks, color):
+    def __draw_marks(self, img, marks, color, width=4):
         UPSC_C = 4
         UPSC_SZ = (224 * UPSC_C, 224 * UPSC_C)
         mark_img = Image.new('RGBA', UPSC_SZ, color=(0, 0, 0, 0))
         for mark in marks:
-            self.__draw_mark(mark_img, UPSC_C, mark, color=color)
+            self.__draw_mark(mark_img, UPSC_C, mark, color=color, width=width)
         mark_img = mark_img.resize(self.__RESIZED_SIZE)
         img.alpha_composite(mark_img)
         return img
 
-    def __draw_mark(self, img, scale, mark, color):
+    def __draw_mark(self, img, scale, mark, color, width):
         DIR_LEN = 20
         m = mark
         xf = self.__create_xf(m.r, (m.cx, m.cy), scale)
@@ -177,7 +177,7 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         box_pts = gu.apply_xf(pline, xf)
         draw.polygon(box_pts, outline=color)
         arrow_pts = gu.apply_xf([(0, 0), (DIR_LEN, 0)], xf)
-        draw.line(arrow_pts, fill=color, width=4)
+        draw.line(arrow_pts, fill=color, width=width)
         return img
 
     def __create_xf(self, rot, translation, scale):
