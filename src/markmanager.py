@@ -18,40 +18,15 @@ Example of label.json:
 """
 
 import copy
-import time
-import numpy as np
 import tkinter as tk
+import numpy as np
 from PIL import Image
 from PIL import ImageTk
 from PIL import ImageDraw
-import geomutils as gu
+import utils
 from mover import Mover
 from rotator import Rotator
-
-
-class Mark():
-    """."""
-
-    cx, cy, w, le, r = 0, 0, 0, 0, 0
-
-    def __init__(self, cx, cy, w, length, r):
-        """."""
-        self.cx, self.cy = cx, cy
-        self.w, self.length, self.r = w, length, r
-
-    def serialize(self):
-        """."""
-        return {'center_x': self.cx, 'center_y': self.cy,
-                'width': self.w, 'length': self.length,
-                'rot_deg': self.r}
-
-
-def deserialize_mark(mark_dict):
-    """."""
-    cx, cy = mark_dict['center_x'], mark_dict['center_y']
-    w, length = mark_dict['width'], mark_dict['length']
-    r = mark_dict['rot_deg']
-    return Mark(cx, cy, w, length, r)
+from mark import Mark, deserialize_mark
 
 
 class MarkManager():
@@ -73,6 +48,9 @@ class MarkManager():
     __L_C = 1
     _W_MIN, _W_MAX = 6, 16
     _L_MIN, _L_MAX = 15, 28
+    __BORDER_INDENT = 23
+
+    __FRAGM_W = 30
 
     __LEGEND = """Commands:
 A, Delete - add/remove new mark;
@@ -95,6 +73,7 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
 
     __mover = None
     __rotator = None
+    __already_marked = []
 
     def __init__(self, root):
         """."""
@@ -122,16 +101,26 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         r.bind("<Control-Up>", lambda ev: self.__change_length(self.__L_C))
         r.bind("<Control-Down>", lambda ev: self.__change_length(-self.__L_C))
 
-    def reset_image(self, name, img, label):
-        """."""
-        self.__img = img.convert('RGBA')
+    def reset_image(self, last_images):
+        """Reset represented image for marked.
+
+        The last image - used for marked, other images - for extracting
+        fragments, that already marked.
+        """
+        current = last_images[-1]
+        other_images = last_images[:-1]
+
+        name, img, label = current
+        self.__img = img
         self.__name = name
         self.__init_label = label
+        self.__already_marked = self.__find_already_marked(other_images)
         self.__initial_marks = []
         if label:
             self.__initial_marks = list(map(deserialize_mark, label['marks']))
         self.__marks = copy.deepcopy(self.__initial_marks)
         self.__chosen_mark_idx = 0 if len(self.__marks) > 0 else None
+        self.__img = self.__img.convert('RGBA')
         self.__redraw()
 
     def __redraw(self):
@@ -141,7 +130,8 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
             return
         img = self.__img.resize(self.__RESIZED_SIZE)
         if self.__initial_marks:
-            img = self.__draw_marks(img, self.__initial_marks, 'grey', width=10)
+            img = self.__draw_marks(img, self.__initial_marks, 'grey',
+                                    width=10)
         if self.__marks:
             unchosen_marks = copy.deepcopy(self.__marks)
             del unchosen_marks[self.__chosen_mark_idx]
@@ -149,6 +139,8 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
             if unchosen_marks:
                 img = self.__draw_marks(img, unchosen_marks, 'blue')
             img = self.__draw_marks(img, chosen_marks, 'red')
+        self.__draw_border(img)
+        self.__mark_already_marked_fragms(img)
         img_tk = ImageTk.PhotoImage(img)
         self.__canvas.create_image(0, 0, anchor='nw', image=img_tk)
         self.__canvas.image = img_tk
@@ -156,6 +148,13 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         t = 'image file: {}, (label file - {})'.format(self.__name, lbl_str)
         self.__fname_label['text'] = t
         self.__root.update_idletasks()
+
+    def __draw_border(self, img):
+        bi = self.__BORDER_INDENT * self.__SCALE_COEFF
+        w, h = img.size
+        rect = [bi, bi, w-bi, h-bi]
+        draw = ImageDraw.Draw(img)
+        draw.rectangle(rect, outline='green')
 
     def __draw_marks(self, img, marks, color, width=4):
         UPSC_C = 4
@@ -174,17 +173,17 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         draw = ImageDraw.Draw(img)
         pline = [(m.length / 2, m.w / 2), (m.length / 2, -m.w / 2),
                  (-m.length / 2, -m.w / 2), (-m.length / 2, m.w / 2)]
-        box_pts = gu.apply_xf(pline, xf)
+        box_pts = utils.apply_xf(pline, xf)
         draw.polygon(box_pts, outline=color)
-        arrow_pts = gu.apply_xf([(0, 0), (DIR_LEN, 0)], xf)
+        arrow_pts = utils.apply_xf([(0, 0), (DIR_LEN, 0)], xf)
         draw.line(arrow_pts, fill=color, width=width)
         return img
 
     def __create_xf(self, rot, translation, scale):
-        rot_xf = gu.create_rotation_around_center_xf(rot)
-        trans_xf = gu.create_translation_xf(translation)
-        scale_xf = gu.create_scale_xf(scale)
-        xf = gu.combine_xfs([trans_xf, rot_xf, scale_xf])
+        rot_xf = utils.create_rotation_around_center_xf(rot)
+        trans_xf = utils.create_translation_xf(translation)
+        scale_xf = utils.create_scale_xf(scale)
+        xf = utils.combine_xfs([trans_xf, rot_xf, scale_xf])
         return xf
 
     def get_legend(self):
@@ -256,5 +255,36 @@ W, Q - rotate chosen mark clockwese/counterclockwise.
         label['filename'] = self.__name
         label['img_width'] = self.__img.width
         label['img_height'] = self.__img.height
-        label['marks'] = list(map(lambda m: m.serialize(), self.__marks))
+        label['marks'] = list(map(lambda m: m.serialized(), self.__marks))
         return label
+
+    def __find_already_marked(self, other_images):
+        """Find on current image fragments, that already marked on previous."""
+        # already_marked_fragms = [[50, 50, 80, 80], [100, 100, 130, 130]]
+        FW = self.__FRAGM_W
+        rects = []
+        for _, img, label in other_images:
+            if label is None:
+                continue
+            marks = list(map(deserialize_mark, label['marks']))
+            for m in marks:
+                crop_rect = [m.cx - FW / 2, m.cy - FW / 2,
+                             m.cx + FW/2, m.cy + FW / 2]
+                fragm = img.crop(crop_rect)
+                new_rects = utils.find_matches(self.__img, fragm, 0.96)
+                rects += new_rects
+        return rects
+
+    def __draw_x(self, img, center, width, color, linewidth):
+        c = center
+        draw = ImageDraw.Draw(img)
+        R = width / 2
+        r = [c[0] - R, c[1] - R, c[0] + R, c[1] + R]
+        r = list(map(lambda x: x * self.__SCALE_COEFF, r))
+        draw.line(r, fill=color, width=5)
+        draw.line([r[2], r[1], r[0], r[3]], fill=color, width=linewidth)
+
+    def __mark_already_marked_fragms(self, img):
+        for rect in self.__already_marked:
+            c = ((rect[2] + rect[0]) / 2, (rect[3] + rect[1]) / 2)
+            self.__draw_x(img, c, 10, 'yellow', 5)

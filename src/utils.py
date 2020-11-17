@@ -2,6 +2,7 @@
 
 import math
 import numpy as np
+import cv2 as cv
 
 
 def create_rotation_xf(rotation):
@@ -55,3 +56,21 @@ def apply_xf(points, xf):
         new_pt = np.matmul(xf, np.array([pt[0], pt[1], 1]))
         res.append((new_pt[0], new_pt[1]))
     return res
+
+def find_matches(img, fragm, threshold):
+    """Find matches of fragm in bi image.
+    
+    Return coincedences as list of rects.
+    """
+    fr_rgb = np.array(fragm, dtype=np.uint8)
+    img_rgb = np.array(img, dtype=np.uint8)
+    fr_grey = cv.cvtColor(fr_rgb, cv.COLOR_RGB2GRAY)
+    img_grey = cv.cvtColor(img_rgb, cv.COLOR_RGB2GRAY)
+    res = cv.matchTemplate(img_grey, fr_grey, cv.TM_CCOEFF_NORMED)
+    h, w = fr_grey.shape
+    locs = np.where(res >= threshold)
+    rects = []
+    for pt in zip(*locs):
+        rect = [pt[1], pt[0], pt[1] + w, pt[0] + h]
+        rects.append(rect)
+    return rects

@@ -3,12 +3,7 @@
 This module consists all logic of top level
 """
 
-import time
 import tkinter as tk
-from PIL import Image
-from PIL import ImageTk
-from PIL import ImageDraw
-import numpy
 import pathlib
 
 from datasetmanager import DatasetManager
@@ -31,11 +26,11 @@ def main():
 
     ds_m = DatasetManager(DS_PATH)
     mark_m = MarkManager(root)
-    mark_m.reset_image(*ds_m.get_current())
+    mark_m.reset_image(ds_m.get_last())
 
     def move_to_prev_img():
         if ds_m.move_backward():
-            mark_m.reset_image(*ds_m.get_current())
+            mark_m.reset_image(ds_m.get_last())
     prev_img_btn = tk.Button(root, text="prev image (Backspace)", width=20)
     prev_img_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT)
     prev_img_btn.config(command=move_to_prev_img)
@@ -43,7 +38,7 @@ def main():
 
     def move_to_next_img():
         if ds_m.move_forward():
-            mark_m.reset_image(*ds_m.get_current())
+            mark_m.reset_image(ds_m.get_last())
     next_img_btn = tk.Button(root, text="next image (Enter)", width=20)
     next_img_btn.place(x=(BTN_INDENT + 180), y=BTN_Y_INDENT)
     next_img_btn.config(command=move_to_next_img)
@@ -51,7 +46,7 @@ def main():
 
     def move_to_first_unmarked_img():
         if ds_m.move_to_first_unmarked():
-            mark_m.reset_image(*ds_m.get_current())
+            mark_m.reset_image(ds_m.get_last())
     first_umm_btn = tk.Button(root, width=28)
     first_umm_btn['text'] = 'move to first unmarked image'
     first_umm_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + BTN_Y_STEP)
@@ -60,7 +55,7 @@ def main():
     def save_label():
         marks = mark_m.serialize_marks()
         ds_m.save_marks_in_label(marks)
-        mark_m.reset_image(*ds_m.get_current())
+        mark_m.reset_image(ds_m.get_last())
     save_btn = tk.Button(root, text="save marks in label (S)", width=18)
     save_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + 2 * BTN_Y_STEP)
     save_btn.config(command=save_label)
@@ -68,10 +63,16 @@ def main():
 
     def remove_label():
         if ds_m.remove_label():
-            mark_m.reset_image(*ds_m.get_current())
-    rem_lable_btn = tk.Button(root, text="remove label", width=18)
-    rem_lable_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + 3 * BTN_Y_STEP)
-    rem_lable_btn.config(command=remove_label)
+            mark_m.reset_image(ds_m.get_last())
+    rem_label_btn = tk.Button(root, text="remove label", width=18)
+    rem_label_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + 3 * BTN_Y_STEP)
+    rem_label_btn.config(command=remove_label)
+
+    def create_ds():
+        ds_m.create_fragment_ds()
+    create_ds_btn = tk.Button(root, text="Create fragment dataset", width=28)
+    create_ds_btn.place(x=BTN_INDENT, y=BTN_Y_INDENT + 4 * BTN_Y_STEP)
+    create_ds_btn.config(command=create_ds)
 
     legend_label = tk.Label(root, text=mark_m.get_legend())
     legend_label.config(justify=tk.LEFT)
